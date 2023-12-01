@@ -1,3 +1,6 @@
+import random
+
+
 class Ponto: #Classe que representa a localizaçao do cliente, lembrando que o primeiro índice do array é a posição da Sede
     def __init__(self, x, y):
         self.x = x
@@ -12,6 +15,9 @@ listaPontos = [#Array composta pela lista de pontos dos clientes, lembrando que 
     Ponto(0, 0),
     Ponto(5, 6),
     Ponto(7, 7),
+    Ponto(2, 8),
+    Ponto(9, 1),
+    Ponto(3, 4),
 ]
 
 listaPedidos = [#Array composta pela lista de Pedidos dos clientes
@@ -20,16 +26,38 @@ listaPedidos = [#Array composta pela lista de Pedidos dos clientes
     Pedido(5, 6),
 ]
 
+def repr_ponto(ponto):
+    return (ponto.x, ponto.y)
+
+def gerarArrayAleatorio(ListaPontos):
+    tamanho = len(ListaPontos)
+    ordem = []
+    for i in range(tamanho):
+        ordem.append(i)
+
+    for i in range(tamanho):
+        j = random.randrange(tamanho)
+        ordem[i], ordem[j] = ordem[j], ordem[i]
+
+    return [repr_ponto(ListaPontos[i]) for i in ordem]
+
 def calcSatisfacao(arrayOrdem):
-    for i in range(len(arrayOrdem)):
+    satisfacao = 0
+    tempoEntrega = 0
+    for i in range(len(arrayOrdem) - 1):
         atual = arrayOrdem[i]
-        proximo = arrayOrdem[i+i]
-        
-        getSatisfacao(atual, proximo,)
-        
-        
+        proximo = arrayOrdem[i + 1]
+
+        tempoEntrega += getDistancia(atual, proximo) * 0.5
+        print(tempoEntrega)
+        print("tempo:", tempoEntrega)
+        satisfacao += getSatisfacao(atual, proximo, tempoEntrega)
+        print("satisfação:",satisfacao)
+
+    return satisfacao
+      
 def getDistancia(posSede, posCliente): #Função que pega a distância entre o cliente e a sede
-    distancia = ((posSede.x - posCliente.x)**2 + (posCliente.y- posCliente.y)**2)**(1/2)
+    distancia = ((posSede[0] - posCliente[0])**2 + (posSede[1]- posCliente[1])**2)**(1/2)
     return(distancia)
 
 def getTempoTolerancia(posSede, posCliente): #Função que calcula o tempo de tolerância da entrega
@@ -62,4 +90,8 @@ def getSatisfacao(posSede, posCliente, tempoEntrega): #Função que calcula a sa
     else:
         return 0
 
-print(getTempoTolerancia(listaPontos[0], listaPontos[1]))
+# print(getTempoTolerancia(listaPontos[0], listaPontos[1]))
+# print(repr(listaPontos))
+listaPontos = gerarArrayAleatorio(listaPontos)
+print(listaPontos)
+print(calcSatisfacao(listaPontos))
