@@ -24,35 +24,10 @@ def totalPedidos(listaClientes):
     soma_elementos = sum(cliente.quantidade for cliente in listaClientes)
     return soma_elementos
 
-# def gerarArrayAleatorio(listaClientes):
-#     tamanho = len(listaClientes) - 1  
-#     ordem = list(range(1, tamanho + 1))  
-
-#     voltasSede = len(listaClientes)
-#     # print(totalPedidos(listaClientes)/voltasSede) 
-#     quantiaVoltasSedeAleatorio = (random.randint(0, voltasSede+1))
-    
-
-#     for i in range(quantiaVoltasSedeAleatorio):
-#         ordem.append(0)
-
-#     print("ordem: ", ordem)
-
-#     for i in range(tamanho):
-#         j = random.randrange(tamanho)
-#         ordem[i], ordem[j] = ordem[j], ordem[i]
-
-#     # Adiciona Cliente(0, 0, 0, 0) aleatoriamente
-#     # quantidade_cliente_0 = random.randint(0, voltasSede)
-#     # print("random:", quantidade_cliente_0)
-    
-#     return [Cliente(0, 0, 0, 0)] + [listaClientes[i] for i in ordem]
-
 def gerarArrayAleatorio(listaClientes):
     voltasSede = len(listaClientes)
     quantiaVoltasSedeAleatorio = random.randint(voltasSede, voltasSede + 5)
 
-    # Create a copy of listaClientes
     clientes_copy = listaClientes.copy()
 
     for i in range(quantiaVoltasSedeAleatorio):
