@@ -104,6 +104,9 @@ def calcSatisfacao(clientes):
         if carga_atual < cliente_atual.quantidade:
             satisfacao_total -= 5
 
+        if tempo_atual + tempo_entrega > tempo_tolerancia:
+            satisfacao_total -= 10
+
         if carga_atual >= cliente_atual.quantidade and tempo_atual + tempo_entrega <= tempo_tolerancia:
             satisfacao = getSatisfacao(pos_sede, pos_cliente, tempo_entrega, cliente_atual.quantidade)
             satisfacao_total += satisfacao
