@@ -1,70 +1,114 @@
 import random
 
+class Cliente:
+    def __init__(self, nome, quantidade, x, y):
+        self.nome = nome
+        self.quantidade = quantidade
+        self.coordenadas = Ponto(x, y)
 
-class Ponto: #Classe que representa a localizaçao do cliente, lembrando que o primeiro índice do array é a posição da Sede
+    def __repr__(self):
+        return f'Cliente({self.nome}, {self.quantidade}, {repr(self.coordenadas)})'
+
+class Ponto:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-class Pedido: #Classe que representa o pedido do cliente, contendo o identificador do mesmo e a quantidade de águas
-    def __init__(self, cliente, quantidade):
-        self.cliente = cliente
-        self.quantidade = quantidade
-
-listaPontos = [#Array composta pela lista de pontos dos clientes, lembrando que o primeiro índice do array é a posição da Sede
-    Ponto(0, 0),
-    Ponto(5, 6),
-    Ponto(7, 7),
-    Ponto(2, 8),
-    Ponto(9, 1),
-    Ponto(3, 4),
-]
-
-listaPedidos = [#Array composta pela lista de Pedidos dos clientes
-    Pedido(1, 2),
-    Pedido(3, 4),
-    Pedido(5, 6),
-]
+    def __repr__(self):
+        return f'Ponto({self.x}, {self.y})'
 
 def repr_ponto(ponto):
     return (ponto.x, ponto.y)
 
-def gerarArrayAleatorio(ListaPontos):
-    tamanho = len(ListaPontos)
-    ordem = []
-    for i in range(tamanho):
-        ordem.append(i)
+def totalPedidos(listaClientes):
+    soma_elementos = sum(cliente.quantidade for cliente in listaClientes)
+    return soma_elementos
 
-    for i in range(tamanho):
-        j = random.randrange(tamanho)
-        ordem[i], ordem[j] = ordem[j], ordem[i]
+# def gerarArrayAleatorio(listaClientes):
+#     tamanho = len(listaClientes) - 1  
+#     ordem = list(range(1, tamanho + 1))  
 
-    return [repr_ponto(ListaPontos[i]) for i in ordem]
+#     voltasSede = len(listaClientes)
+#     # print(totalPedidos(listaClientes)/voltasSede) 
+#     quantiaVoltasSedeAleatorio = (random.randint(0, voltasSede+1))
+    
+
+#     for i in range(quantiaVoltasSedeAleatorio):
+#         ordem.append(0)
+
+#     print("ordem: ", ordem)
+
+#     for i in range(tamanho):
+#         j = random.randrange(tamanho)
+#         ordem[i], ordem[j] = ordem[j], ordem[i]
+
+#     # Adiciona Cliente(0, 0, 0, 0) aleatoriamente
+#     # quantidade_cliente_0 = random.randint(0, voltasSede)
+#     # print("random:", quantidade_cliente_0)
+    
+#     return [Cliente(0, 0, 0, 0)] + [listaClientes[i] for i in ordem]
+
+def gerarArrayAleatorio(listaClientes):
+    voltasSede = len(listaClientes)
+    quantiaVoltasSedeAleatorio = random.randint(voltasSede, voltasSede + 5)
+
+    # Create a copy of listaClientes
+    clientes_copy = listaClientes.copy()
+
+    for i in range(quantiaVoltasSedeAleatorio):
+        clientes_copy.append(Cliente(0, 0, 0, 0))
+
+    print(len(clientes_copy))
+    clientes_embaralhados = random.sample(clientes_copy, len(clientes_copy))
+    return [Cliente(0, 0, 0, 0)] + clientes_embaralhados
+
+
 
 def calcSatisfacao(arrayOrdem):
+    print(arrayOrdem)
     satisfacao = 0
     tempoEntrega = 0
+    cargaAtual = 4
+
     for i in range(len(arrayOrdem) - 1):
         atual = arrayOrdem[i]
+        # print("atual:", atual)
         proximo = arrayOrdem[i + 1]
+        # print("proximo:", proximo)
+                
+        # if proximo.quantidade > cargaAtual:
+        #     proximo = (Cliente(0, 0, 0, 0))
+        #     # arrayOrdem.insert(i + 1, Cliente(0, 0, 0, 0))
+        #     arrayOrdem.insert(arrayOrdem[i + 1], arrayOrdem[i + 1])
+        #     print("arrayordem:", arrayOrdem)
+        #     i += 1  
+        #     cargaAtual = 4  
 
-        tempoEntrega += getDistancia(atual, proximo) * 0.5
-        print(tempoEntrega)
-        print("tempo:", tempoEntrega)
-        satisfacao += getSatisfacao(atual, proximo, tempoEntrega)
-        print("satisfação:",satisfacao)
+        tempoEntrega += getDistancia(atual.coordenadas, proximo.coordenadas) * 0.5
+        # print(tempoEntrega)
+        
+        
+        cargaAtual -= atual.quantidade
 
+        satisfacao += getSatisfacao(atual.coordenadas, proximo.coordenadas, tempoEntrega, atual.quantidade)
+
+    
+    if arrayOrdem[-1].nome != 0 and cargaAtual < 4:
+        arrayOrdem.append(Cliente(0, 4, 0, 0))
+
+    # print(arrayOrdem)
     return satisfacao
-      
-def getDistancia(posSede, posCliente): #Função que pega a distância entre o cliente e a sede
-    distancia = ((posSede[0] - posCliente[0])**2 + (posSede[1]- posCliente[1])**2)**(1/2)
-    return(distancia)
 
-def getTempoTolerancia(posSede, posCliente): #Função que calcula o tempo de tolerância da entrega
-    return getDistancia(posSede, posCliente)*1.5*0.5
 
-def getSatisfacao(posSede, posCliente, tempoEntrega): #Função que calcula a satisfação do cliente mediante o tempo de entrega
-    tempoTolerancia = getTempoTolerancia(posSede,posCliente) #Chama a função que calcula o tempo de tolerância da entrega, tomando por parâmetro a posição da sede e a posição do cliente
+def getDistancia(posSede, posCliente):
+    distancia = ((posSede.x - posCliente.x) ** 2 + (posSede.y - posCliente.y) ** 2) ** (1 / 2)
+    return distancia
+
+def getTempoTolerancia(posSede, posCliente):
+    return getDistancia(posSede, posCliente) * 0.75
+
+def getSatisfacao(posSede, posCliente, tempoEntrega, quantidade):
+    tempoTolerancia = getTempoTolerancia(posSede, posCliente)
 
     if tempoEntrega == tempoTolerancia:
         return 6
@@ -74,9 +118,9 @@ def getSatisfacao(posSede, posCliente, tempoEntrega): #Função que calcula a sa
 
     if tempoEntrega >= tempoTolerancia / 2:
         return 8
-    
-    percentualAtraso = ((tempoEntrega - tempoTolerancia)/ tempoTolerancia)*100 #Cálculo feito para saber o percentual de atraso da entrega, tomando por base a distância 
-    
+
+    percentualAtraso = ((tempoEntrega - tempoTolerancia) / tempoTolerancia) * 100
+
     if percentualAtraso <= 10:
         return 5
     elif percentualAtraso <= 20:
@@ -90,8 +134,27 @@ def getSatisfacao(posSede, posCliente, tempoEntrega): #Função que calcula a sa
     else:
         return 0
 
-# print(getTempoTolerancia(listaPontos[0], listaPontos[1]))
-# print(repr(listaPontos))
-listaPontos = gerarArrayAleatorio(listaPontos)
-print(listaPontos)
-print(calcSatisfacao(listaPontos))
+def criaGeracao(listaClientes):
+    listaGeracao = []
+    for i in range(10):
+        listaGeracao.append(gerarArrayAleatorio(listaClientes))
+
+    return listaGeracao
+
+
+listaClientes = [
+    Cliente(1, 4, 14, 2),
+    Cliente(2, 4, 5, 6),
+    Cliente(3, 2, 7, 7),
+    Cliente(4, 4, 9, 4),
+    Cliente(5, 3, 1, 2),
+    Cliente(6, 2, 7, 7),
+]
+print("*********************************************************************************************************************************************************************************************************")
+populacao = criaGeracao(listaClientes)
+for i in populacao:
+    print(i,"\n")
+# print(populacao)
+# (calcSatisfacao(populacao[0]))
+
+# print(totalPedidos(populacao[0]))
