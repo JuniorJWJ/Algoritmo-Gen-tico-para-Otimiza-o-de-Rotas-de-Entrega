@@ -109,8 +109,9 @@ def calcSatisfacao(clientes):
             satisfacao_total += satisfacao
             tempo_atual += tempo_entrega
             carga_atual -= cliente_atual.quantidade
-
-        if i == 0:
+        
+        if cliente_atual.nome == 0:
+            print("voltou base")
             carga_atual = 4
 
     return satisfacao_total
