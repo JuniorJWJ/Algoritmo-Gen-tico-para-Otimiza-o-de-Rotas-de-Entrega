@@ -20,6 +20,22 @@ class Ponto:
 def repr_ponto(ponto):
     return (ponto.x, ponto.y)
 
+listaClientes = [
+    Cliente(1, 4, 14, 2),
+    Cliente(2, 4, 5, 6),
+    Cliente(3, 2, 7, 7),
+    Cliente(4, 4, 9, 4),
+    Cliente(5, 3, 1, 2),
+    Cliente(6, 2, 7, 7),
+]
+
+def criaGeracao(listaClientes):
+    listaGeracao = []
+    for i in range(10):
+        listaGeracao.append(gerarArrayAleatorio(listaClientes))
+
+    return listaGeracao
+
 def totalPedidos(listaClientes):
     soma_elementos = sum(cliente.quantidade for cliente in listaClientes)
     return soma_elementos
@@ -37,50 +53,12 @@ def gerarArrayAleatorio(listaClientes):
     clientes_embaralhados = random.sample(clientes_copy, len(clientes_copy))
     return [Cliente(0, 0, 0, 0)] + clientes_embaralhados
 
-
-
-def calcSatisfacao(arrayOrdem):
-    print(arrayOrdem)
-    satisfacao = 0
-    tempoEntrega = 0
-    cargaAtual = 4
-
-    for i in range(len(arrayOrdem) - 1):
-        atual = arrayOrdem[i]
-        # print("atual:", atual)
-        proximo = arrayOrdem[i + 1]
-        # print("proximo:", proximo)
-                
-        # if proximo.quantidade > cargaAtual:
-        #     proximo = (Cliente(0, 0, 0, 0))
-        #     # arrayOrdem.insert(i + 1, Cliente(0, 0, 0, 0))
-        #     arrayOrdem.insert(arrayOrdem[i + 1], arrayOrdem[i + 1])
-        #     print("arrayordem:", arrayOrdem)
-        #     i += 1  
-        #     cargaAtual = 4  
-
-        tempoEntrega += getDistancia(atual.coordenadas, proximo.coordenadas) * 0.5
-        # print(tempoEntrega)
-        
-        
-        cargaAtual -= atual.quantidade
-
-        satisfacao += getSatisfacao(atual.coordenadas, proximo.coordenadas, tempoEntrega, atual.quantidade)
-
-    
-    if arrayOrdem[-1].nome != 0 and cargaAtual < 4:
-        arrayOrdem.append(Cliente(0, 4, 0, 0))
-
-    # print(arrayOrdem)
-    return satisfacao
-
-
-def getDistancia(posSede, posCliente):
-    distancia = ((posSede.x - posCliente.x) ** 2 + (posSede.y - posCliente.y) ** 2) ** (1 / 2)
+def getDistancia(posCliente1, posCliente2):
+    distancia = ((posCliente1.x - posCliente2.x) ** 2 + (posCliente1.y - posCliente2.y) ** 2)
     return distancia
 
 def getTempoTolerancia(posSede, posCliente):
-    return getDistancia(posSede, posCliente) * 0.75
+    return getDistancia(posSede, posCliente) * 1.5
 
 def getSatisfacao(posSede, posCliente, tempoEntrega, quantidade):
     tempoTolerancia = getTempoTolerancia(posSede, posCliente)
@@ -109,22 +87,36 @@ def getSatisfacao(posSede, posCliente, tempoEntrega, quantidade):
     else:
         return 0
 
-def criaGeracao(listaClientes):
-    listaGeracao = []
-    for i in range(10):
-        listaGeracao.append(gerarArrayAleatorio(listaClientes))
+def calcSatisfacao(clientes):
+    tempo_atual = 0
+    carga_atual = 4
+    satisfacao_total = 0
 
-    return listaGeracao
+    for i in range(1, len(clientes)):  # Começa do índice 1 para evitar a sede no início
+        cliente_atual = clientes[i]
+        pos_sede = clientes[0].coordenadas
+        pos_cliente = cliente_atual.coordenadas
+
+        distancia = getDistancia(pos_sede, pos_cliente)
+        tempo_entrega = distancia * 0.5
+        tempo_tolerancia = getTempoTolerancia(pos_sede, pos_cliente)  # Adiciona esta linha
+
+        if carga_atual < cliente_atual.quantidade:
+            satisfacao_total -= 5
+
+        if carga_atual >= cliente_atual.quantidade and tempo_atual + tempo_entrega <= tempo_tolerancia:
+            satisfacao = getSatisfacao(pos_sede, pos_cliente, tempo_entrega, cliente_atual.quantidade)
+            satisfacao_total += satisfacao
+            tempo_atual += tempo_entrega
+            carga_atual -= cliente_atual.quantidade
+
+        if i == 0:
+            carga_atual = 4
+
+    return satisfacao_total
 
 
-listaClientes = [
-    Cliente(1, 4, 14, 2),
-    Cliente(2, 4, 5, 6),
-    Cliente(3, 2, 7, 7),
-    Cliente(4, 4, 9, 4),
-    Cliente(5, 3, 1, 2),
-    Cliente(6, 2, 7, 7),
-]
+
 print("*********************************************************************************************************************************************************************************************************")
 populacao = criaGeracao(listaClientes)
 for i in populacao:
@@ -133,3 +125,5 @@ for i in populacao:
 # (calcSatisfacao(populacao[0]))
 
 # print(totalPedidos(populacao[0]))
+satisfacao_total = calcSatisfacao(populacao[0])
+print("Satisfação Total:", satisfacao_total)
