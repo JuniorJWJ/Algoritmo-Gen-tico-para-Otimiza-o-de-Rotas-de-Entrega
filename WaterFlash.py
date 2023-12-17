@@ -122,22 +122,22 @@ def calcSatisfacao(clientes):
 
     return satisfacao_total
 
-def mutacao(individuo, taxa_mutacao):
-    novo_individuo = copy.deepcopy(individuo)
-
-    for _ in range(len(novo_individuo)):
-        if random.random() < taxa_mutacao:
-            idx1, idx2 = random.sample(range(1, len(novo_individuo)), 2)
-            novo_individuo[idx1], novo_individuo[idx2] = novo_individuo[idx2], novo_individuo[idx1]
-
-    return novo_individuo
-
 def crossover(pai1, pai2):
     ponto_corte = random.randint(1, len(pai1) - 1)
     filho1 = pai1[:ponto_corte] + [cliente for cliente in pai2 if cliente not in pai1[:ponto_corte]]
     filho2 = pai2[:ponto_corte] + [cliente for cliente in pai1 if cliente not in pai2[:ponto_corte]]
     return filho1, filho2
 
+def mutacao(individuo, taxa_mutacao):
+    novo_individuo = copy.deepcopy(individuo)
+
+    for idx, cliente in enumerate(novo_individuo):
+        if idx > 0 and random.random() < taxa_mutacao:
+            # Trocar a posição do cliente com outro cliente aleatório
+            idx_troca = random.randint(1, len(novo_individuo) - 1)
+            novo_individuo[idx], novo_individuo[idx_troca] = novo_individuo[idx_troca], novo_individuo[idx]
+
+    return novo_individuo
 print("*********************************************************************************************************************************************************************************************************\n\n")
 # populacao = criaGeracao(listaClientes)
 # # for i in populacao:
@@ -165,3 +165,30 @@ populacao_ordenada = sorted(satisfacao_por_individuo, key=lambda x: x[1], revers
 # Acessa o indivíduo mais satisfatório (o primeiro na lista ordenada)
 individuo_mais_satisfatorio = populacao_ordenada[0][0]
 print(individuo_mais_satisfatorio)
+
+
+# Número de indivíduos que serão mantidos por elitismo
+elitismo_size = 2
+
+# Selecionar os melhores indivíduos (elitismo)
+melhores_individuos = [individuo for individuo, _ in populacao_ordenada[:elitismo_size]]
+
+# Realizar cruzamento para criar novos indivíduos
+nova_geracao = []
+while len(nova_geracao) < 10:  # Você pode ajustar o número de indivíduos na nova geração conforme necessário
+    pai1, pai2 = random.sample(melhores_individuos, 2)
+    filho1, filho2 = crossover(pai1, pai2)
+    nova_geracao.append(filho1)
+    nova_geracao.append(filho2)
+
+# Adicionar mutação a alguns indivíduos na nova geração
+taxa_mutacao = 0.1  # Ajuste conforme necessário
+nova_geracao = [mutacao(individuo, taxa_mutacao) for individuo in nova_geracao]
+
+# Substituir a população antiga pela nova geração
+populacao = nova_geracao
+
+# ... (restante do código)
+
+
+print(populacao)
