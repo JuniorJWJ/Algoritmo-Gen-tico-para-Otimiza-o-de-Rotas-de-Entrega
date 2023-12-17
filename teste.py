@@ -1,7 +1,6 @@
 import random
 import copy
 
-
 class Cliente:
     def __init__(self, nome, quantidade, x, y):
         self.nome = nome
@@ -19,9 +18,6 @@ class Ponto:
     def __repr__(self):
         return f'Ponto({self.x}, {self.y})'
 
-def repr_ponto(ponto):
-    return (ponto.x, ponto.y)
-
 listaClientes = [
     Cliente(1, 4, 14, 2),
     Cliente(2, 4, 5, 6),
@@ -35,7 +31,6 @@ def criaGeracao(listaClientes):
     listaGeracao = []
     for i in range(10):
         listaGeracao.append(gerarArrayAleatorio(listaClientes))
-
     return listaGeracao
 
 def totalPedidos(listaClientes):
@@ -51,7 +46,6 @@ def gerarArrayAleatorio(listaClientes):
     for i in range(quantiaVoltasSedeAleatorio):
         clientes_copy.append(Cliente(0, 0, 0, 0))
 
-    # print(len(clientes_copy))
     clientes_embaralhados = random.sample(clientes_copy, len(clientes_copy))
     return [Cliente(0, 0, 0, 0)] + clientes_embaralhados
 
@@ -65,14 +59,9 @@ def getTempoTolerancia(posSede, posCliente):
 def getSatisfacao(posSede, posCliente, tempoEntrega, quantidade):
     tempoTolerancia = getTempoTolerancia(posSede, posCliente)
 
-    if tempoEntrega == tempoTolerancia:
-        return 6
-
-    if tempoEntrega < tempoTolerancia / 2:
-        return 10
-
-    if tempoEntrega >= tempoTolerancia / 2:
-        return 8
+    # Add a check to avoid division by zero
+    if tempoTolerancia == 0:
+        return 0
 
     percentualAtraso = ((tempoEntrega - tempoTolerancia) / tempoTolerancia) * 100
 
@@ -94,74 +83,90 @@ def calcSatisfacao(clientes):
     carga_atual = 4
     satisfacao_total = 0
 
-    for i in range(1, len(clientes)):  # Começa do índice 1 para evitar a sede no início
+    for i in range(1, len(clientes)):
         cliente_atual = clientes[i]
         pos_sede = clientes[0].coordenadas
         pos_cliente = cliente_atual.coordenadas
 
         distancia = getDistancia(pos_sede, pos_cliente)
         tempo_entrega = distancia * 0.5
-        tempo_tolerancia = getTempoTolerancia(pos_sede, pos_cliente)  # Adiciona esta linha
+        tempo_tolerancia = getTempoTolerancia(pos_sede, pos_cliente)
 
         if carga_atual < cliente_atual.quantidade:
             satisfacao_total -= 5
-            
+
         if tempo_atual + tempo_entrega > tempo_tolerancia:
             satisfacao_total -= 10
-
 
         if carga_atual >= cliente_atual.quantidade and tempo_atual + tempo_entrega <= tempo_tolerancia:
             satisfacao = getSatisfacao(pos_sede, pos_cliente, tempo_entrega, cliente_atual.quantidade)
             satisfacao_total += satisfacao
             tempo_atual += tempo_entrega
             carga_atual -= cliente_atual.quantidade
-        
-        if cliente_atual.nome == 0:
-            # print("voltou base")
-            carga_atual = 4
 
     return satisfacao_total
 
-def mutacao(individuo, taxa_mutacao):
-    novo_individuo = copy.deepcopy(individuo)
+# Restante do código...
 
-    for _ in range(len(novo_individuo)):
-        if random.random() < taxa_mutacao:
-            idx1, idx2 = random.sample(range(1, len(novo_individuo)), 2)
-            novo_individuo[idx1], novo_individuo[idx2] = novo_individuo[idx2], novo_individuo[idx1]
+# Funções adicionais
+def calcularSatisfacaoPopulacao(populacao):
+    satisfacoes = [calcSatisfacao(individuo) for individuo in populacao]
+    return satisfacoes
 
-    return novo_individuo
+def ordenarPopulacaoPorSatisfacao(populacao, satisfacoes):
+    satisfacoes_ordenada = sorted(satisfacoes, reverse=True)
 
-def crossover(pai1, pai2):
-    ponto_corte = random.randint(1, len(pai1) - 1)
-    filho1 = pai1[:ponto_corte] + [cliente for cliente in pai2 if cliente not in pai1[:ponto_corte]]
-    filho2 = pai2[:ponto_corte] + [cliente for cliente in pai1 if cliente not in pai2[:ponto_corte]]
-    return filho1, filho2
+    def comparador(cliente1, cliente2):
+        satisfacao_cliente1 = satisfacoes_ordenada[populacao.index(cliente1)]
+        satisfacao_cliente2 = satisfacoes_ordenada[populacao.index(cliente2)]
+        return satisfacao_cliente1 - satisfacao_cliente2
 
-print("*********************************************************************************************************************************************************************************************************\n\n")
-# populacao = criaGeracao(listaClientes)
-# # for i in populacao:
-# #     print(i,"\n")
-# # print(populacao)
-# # (calcSatisfacao(populacao[0]))
+    populacao_ordenada = sorted(populacao, key=comparador, reverse=True)
+    return populacao_ordenada
 
-# # print(totalPedidos(populacao[0]))
-# satisfacao_total = calcSatisfacao(populacao[0])
+def selecionarMelhores(populacao_ordenada, percentual_elitismo):
+    quantidade_melhores = int(len(populacao_ordenada) * percentual_elitismo)
+    melhores = populacao_ordenada[:quantidade_melhores]
+    return melhores
 
-# for i in populacao:
-#     satisfacao_total = calcSatisfacao(i)
-# print("Satisfação Total:", satisfacao_total)
+def selecionarIndividuoRoleta(populacao, satisfacoes):
+    soma_satisfacoes = sum(satisfacoes)
+    probabilidade_acumulada = [sum(satisfacoes[:i+1]) / soma_satisfacoes for i in range(len(satisfacoes))]
+    sorteio = random.random()
+    for i, probabilidade in enumerate(probabilidade_acumulada):
+        if sorteio <= probabilidade:
+            return populacao[i]
+
+# ...
+
+# Parâmetros
+percentual_elitismo = 0.2
+taxa_mutacao = 0.1
+
+# Criação da população inicial
 populacao = criaGeracao(listaClientes)
 
-# Calcular a satisfação para cada indivíduo na população
-satisfacao_por_individuo = [(individuo, calcSatisfacao(individuo)) for individuo in populacao]
+# Número de gerações
+num_geracoes = 100
 
-# Ordenar a população com base na satisfação
-populacao_ordenada = sorted(satisfacao_por_individuo, key=lambda x: x[1], reverse=True)
+# Loop principal
+for geracao in range(num_geracoes):
+    satisfacoes = calcularSatisfacaoPopulacao(populacao)
+    populacao = ordenarPopulacaoPorSatisfacao(populacao, satisfacoes)
+    melhores = selecionarMelhores(populacao, percentual_elitismo)
+    nova_populacao = melhores
+    while len(nova_populacao) < len(populacao):
+        pai1 = selecionarIndividuoRoleta(populacao, satisfacoes)
+        pai2 = selecionarIndividuoRoleta(populacao, satisfacoes)
+        filho1, filho2 = crossover(pai1, pai2)
+        filho1_mutado = mutacao(filho1, taxa_mutacao)
+        filho2_mutado = mutacao(filho2, taxa_mutacao)
+        nova_populacao.extend([filho1_mutado, filho2_mutado])
+    populacao = nova_populacao
+    melhor_satisfacao = calcularSatisfacaoPopulacao([populacao[0]])[0]
+    print(f"Geração {geracao + 1} - Melhor Satisfação: {melhor_satisfacao}")
 
-# for individuo, satisfacao in populacao_ordenada:
-#     print(f"Satisfação: {satisfacao}, Indivíduo: {individuo}")
-
-# Acessa o indivíduo mais satisfatório (o primeiro na lista ordenada)
-individuo_mais_satisfatorio = populacao_ordenada[0][0]
-print(individuo_mais_satisfatorio)
+melhor_solucao = populacao[0]
+melhor_satisfacao = calcularSatisfacaoPopulacao([melhor_solucao])[0]
+print(f"\nMelhor Solução - Satisfação: {melhor_satisfacao}")
+print("Caminho da melhor solução:", melhor_solucao)
