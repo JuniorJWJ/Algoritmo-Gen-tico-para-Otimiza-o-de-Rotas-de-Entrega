@@ -1,6 +1,6 @@
 import random
 import copy
-
+random.seed(11)
 
 class Cliente:
     def __init__(self, nome, quantidade, x, y):
@@ -36,7 +36,7 @@ listaClientes = [
 def criaGeracao(listaClientes):
     listaGeracao = []
     for i in range(10):
-        listaGeracao.append(gerarArrayAleatorio(listaClientes))
+        listaGeracao.append( [ gerarArrayAleatorio(listaClientes), 0 ])
 
     return listaGeracao
 
@@ -60,7 +60,7 @@ def gerarArrayAleatorio(listaClientes):
 
 
 def getDistancia(posCliente1, posCliente2):
-    distancia = ((posCliente1.x - posCliente2.x) ** 2 + (posCliente1.y - posCliente2.y) ** 2)
+    distancia = ((posCliente1.x - posCliente2.x) * 2 + (posCliente1.y - posCliente2.y) * 2)
     return distancia
 
 
@@ -95,36 +95,49 @@ def getSatisfacao(posSede, posCliente, tempoEntrega, quantidade):
     else:
         return 0
 
-
+def isSede(cliente):
+    if cliente.coordenadas.x == 0 and (cliente.coordenadas.y == 0):
+        return True
+    return False
 def calcSatisfacao(clientes):
+   
     tempo_atual = 0
     carga_atual = 4
     satisfacao_total = 0
 
-    for i in range(1, len(clientes)):
-        cliente_atual = clientes[i]
-        pos_sede = clientes[0].coordenadas
-        pos_cliente = cliente_atual.coordenadas
+    
+    #print(clientes[0], "\n")
+    cliente_teste = clientes[0]
+    for clin in cliente_teste:
+        #print("carga atual", carga_atual)
+       # print("cliente atual", clin)
+        pos_sede = Cliente(0, 0, 0, 0).coordenadas
+        pos_cliente = clin.coordenadas
 
         distancia = getDistancia(pos_sede, pos_cliente)
+        #print("distancia", distancia)
         tempo_entrega = distancia * 0.5
         tempo_tolerancia = getTempoTolerancia(pos_sede, pos_cliente)
-
-        if carga_atual < cliente_atual.quantidade:
+        #print("carga_atual < clin.quantidade", carga_atual , clin.quantidade)
+        if(isSede(clin)):
+            carga_atual = 4
+            
+        if carga_atual < clin.quantidade:
             satisfacao_total -= 5
-
+        
+            
         if tempo_atual + tempo_entrega > tempo_tolerancia:
             satisfacao_total -= 10
 
-        if carga_atual >= cliente_atual.quantidade and tempo_atual + tempo_entrega <= tempo_tolerancia:
-            satisfacao = getSatisfacao(pos_sede, pos_cliente, tempo_entrega, cliente_atual.quantidade)
+        if carga_atual >= clin.quantidade:
+            satisfacao = getSatisfacao(pos_sede, pos_cliente, tempo_entrega, clin.quantidade)
             satisfacao_total += satisfacao
             tempo_atual += tempo_entrega
-            carga_atual -= cliente_atual.quantidade
+            carga_atual -= clin.quantidade
 
-        if cliente_atual.nome == 0:
-            carga_atual = 4
-
+        #if cliente_teste.nome == 0:
+           # carga_atual = 4
+    #print("satisfacao_total", satisfacao_total)
     return satisfacao_total
 
 def mutacao(individuo):
@@ -139,10 +152,9 @@ def mutacao(individuo):
 
 
 def crossover(pai1, pai2):
-    ponto_corte1 = random.randint(1, len(pai1) - 2)
-    ponto_corte2 = random.randint(ponto_corte1 + 1, len(pai2) - 1)
-    filho1 = pai1[:ponto_corte1] + pai2[ponto_corte1:ponto_corte2] + pai1[ponto_corte2:]
-    filho2 = pai2[:ponto_corte1] + pai1[ponto_corte1:ponto_corte2] + pai2[ponto_corte2:]
+    ponto_corte1 = random.randint(1, len(pai1))
+    filho1 = pai1[:ponto_corte1] + pai2[ponto_corte1:] 
+    filho2 = pai2[:ponto_corte1] + pai1[ponto_corte1:] 
     return filho1, filho2
 
 
@@ -152,42 +164,48 @@ def elitismo(populacao_ordenada, elitismo_size):
     return melhores_individuos
 
 
-def evolucao(populacao, taxa_mutacao, elitismo_size):
-    satisfacao_por_individuo = [(individuo, calcSatisfacao(individuo)) for individuo in populacao]
-    populacao_ordenada = sorted(satisfacao_por_individuo, key=lambda x: x[1], reverse=True)
-
-    melhores_individuos = elitismo(populacao_ordenada, elitismo_size)
-    nova_geracao = copy.deepcopy(melhores_individuos)
-
-    while len(nova_geracao) < len(populacao):
-        pai1, pai2 = random.sample(melhores_individuos, 2)
-        filho1, filho2 = crossover(pai1, pai2)
-        nova_geracao.append(filho1)
-        nova_geracao.append(filho2)
-
-    nova_geracao = [mutacao(individuo) for individuo in nova_geracao]
-
-    return nova_geracao
-
-
 # Exemplo de uso
 # Exemplo de uso
 populacao = criaGeracao(listaClientes)
 
 melhor_individuo = None
-melhor_satisfacao = float('-inf')
+melhor_satisfacao = -10000
 
-for geracao in range(100000):  # Ajuste o número de gerações conforme necessário
-    populacao = evolucao(populacao, taxa_mutacao=0.1, elitismo_size=2)
-    satisfacao_total = calcSatisfacao(populacao[0])
-    print(f"Geração {geracao + 1}: Satisfação Total = {satisfacao_total}")
-
+for geracao in range(1000):  # Ajuste o número de gerações conforme necessário
+    print("Geracao", geracao)
+    
+    satisfacao_por_individuo = []
+    for i in populacao:
+        satisfacao_por_individuo.append([ i, calcSatisfacao(i) ] )
+    
+    populacao_ordenada = sorted(satisfacao_por_individuo, key=lambda x: x[1], reverse=True)
+    
+    fitness_melhor = populacao_ordenada[0][-1]
+    print(fitness_melhor)
+   
     # Atualiza o melhor indivíduo se necessário
-    if satisfacao_total > melhor_satisfacao:
-        melhor_satisfacao = satisfacao_total
-        melhor_individuo = copy.deepcopy(populacao[0])
+    if fitness_melhor > melhor_satisfacao:
+        melhor_satisfacao = fitness_melhor
+        melhor_individuo = copy.deepcopy(populacao_ordenada[0])
+    
+    #melhores_individuos = elitismo(populacao_ordenada, elitismo_size)
+    nova_geracao = []
+    pai1 = populacao_ordenada[0][0]
+    pai2 = populacao_ordenada[1][0]
+    nova_geracao.append(pai1)
+    nova_geracao.append(pai2)
+    
+    filho1, filho2 = crossover(pai1, pai2)
+    nova_geracao.append(filho1)
+    nova_geracao.append(filho2)
+    
+    for _ in range(0,6):
+        nova_geracao.append( [ gerarArrayAleatorio(listaClientes), 0] )
+ 
+    populacao = nova_geracao
+
+    
 
 print("\nMelhor Caminho:")
 print(melhor_individuo)
 print(f"Satisfação Total: {melhor_satisfacao}")
-#teste
