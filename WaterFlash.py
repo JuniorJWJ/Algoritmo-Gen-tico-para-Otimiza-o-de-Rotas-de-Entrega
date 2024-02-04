@@ -190,3 +190,4 @@ for geracao in range(100000):  # Ajuste o número de gerações conforme necess�
 print("\nMelhor Caminho:")
 print(melhor_individuo)
 print(f"Satisfação Total: {melhor_satisfacao}")
+#teste
